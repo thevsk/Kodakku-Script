@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "[100] [24] [团本] 桑多利亚：第二巡行",
+    "Guid": "7b163f39-b48b-4b19-88bb-efa45bc8610f",
+    "Version": "0.0.0.1",
+    "Author": "Thevsk",
+    "Repo": "",
+    "DownloadUrl": "https://raw.githubusercontent.com/Thevsk/Kodakku-Script/main/100-24-2.cs",
+    "Note": "v0.0.0.1:\r\n1. 老1部分机制。",
+    "UpdateInfo": "",
+    "TerritoryIds": [
+      1304
+    ]
+  }
+]
