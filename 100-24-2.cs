@@ -24,31 +24,44 @@ using System.Reflection;
 
 namespace ThevskScript;
 
-[ScriptType(name: "[100] [24] [团本] 桑多利亚：第二巡行", territorys: [1304],
-    guid: "7b163f39-b48b-4b19-88bb-efa45bc8610f", version: "0.0.0.1", author: "Thevsk", note: "1. 老1部分机制。", updateInfo: "none")]
+[ScriptType(
+	name: Name, 
+	version: Version, 
+	note: Note, 
+	updateInfo: ChangeLog, 
+    guid: "7b163f39-b48b-4b19-88bb-efa45bc8610f", 
+	author: "Thevsk", 
+	territorys: [1304]
+)]
 public class KtisisHyperboreia
 {
+	const string Version = "0.0.0.2";
+	const string Name = "[100] [24] [团本] 桑多利亚：第二巡行";
+	const string Note = "[100] [24] [团本] 桑多利亚：第二巡行";
+	const string ChangeLog =
+    """
+        [v0.0.0.1] 老1部分机制
+        [v0.0.0.2] 完善老1机制（见过的都画了，打太快没见过后面的）
+    """;
 
     [UserSetting("Debug模式")]
     public bool DebugMode { get; set; } = false;
+	
+	private uint Boss1ID = 0;
+	private uint Boss1LeftHandID = 0;
+	private uint Boss1RightHandID = 0;
 
     public void Init(ScriptAccessory accessory)
     {
-		boss1ID = 0;
+		Boss1ID = 0;
+		Boss1LeftHandID = 0;
+		Boss1RightHandID = 0;
         accessory.Method.RemoveDraw(".*");
 		if (DebugMode) accessory.Method.SendChat($"/e 已清空并释放所有资源");
-		if (DebugMode) boss1ID = 1073756683;
+		if (DebugMode) Boss1ID = 1073756683;
+		if (DebugMode) Boss1LeftHandID = 1073756684;
+		if (DebugMode) Boss1RightHandID = 1073756685;
     }
-	
-	private uint boss1ID = 0;
-	
-	private void SaveBoss1ID(Event @event, ScriptAccessory accessory)
-	{
-		// 获得SourceId
-		if (!ParseObjectId(@event["SourceId"], out var sid)) return;
-		boss1ID = sid;
-		if (DebugMode) accessory.Method.SendChat($"/e BOSS1ID已存储！{boss1ID}");
-	}
 
 	private static bool ParseObjectId(string? idStr, out uint id)
     {
@@ -97,13 +110,21 @@ public class KtisisHyperboreia
 
 	// boss-1-信仰之麒麟
 
+	[ScriptMethod(name: "保存BOSSID", eventType: EventTypeEnum.StartCasting, eventCondition: ["ActionId:44433"], userControl: false)]
+    public void SaveBoss1Id(Event @event, ScriptAccessory accessory)
+    {
+		// 获得SourceId
+		if (!ParseObjectId(@event["SourceId"], out var sid)) return;
+		Boss1ID = sid;
+		if (DebugMode) accessory.Method.SendChat($"/e 记录Boss1ID: {Boss1ID}");
+    }
+
 	[ScriptMethod(name: "AOE", eventType: EventTypeEnum.StartCasting, eventCondition: ["ActionId:44490"])]
     public void Boss1Aoe(Event @event, ScriptAccessory accessory)
     {
 		// 获得读条时长
 		int.TryParse(@event["DurationMilliseconds"], out var dur);
 		accessory.Method.TextInfo("AOE", dur, true);
-		SaveBoss1ID(@event, accessory);
     }
 
 	[ScriptMethod(name: "死亡猛击", eventType: EventTypeEnum.StartCasting, eventCondition: ["ActionId:regex:^(44444|44443)$"])]
@@ -149,7 +170,6 @@ public class KtisisHyperboreia
 		dp.Color = accessory.Data.DefaultDangerColor;
 		dp.DestoryAt = dur;
 		accessory.Method.SendDraw(DrawModeEnum.Default, DrawTypeEnum.Fan, dp);
-		SaveBoss1ID(@event, accessory);
     }
 
 	[ScriptMethod(name: "白虎", eventType: EventTypeEnum.StartCasting, eventCondition: ["ActionId:regex:^(44431)$"])]
@@ -188,8 +208,10 @@ public class KtisisHyperboreia
 	[ScriptMethod(name: "死亡旋转", eventType: EventTypeEnum.StartCasting, eventCondition: ["ActionId:regex:^(44440|44439)$"])]
     public void Boss1_swxz(Event @event, ScriptAccessory accessory)
     {
+		// 获得SourceId
+		if (!ParseObjectId(@event["SourceId"], out var sid)) return;
 		// 检查BOSS实体
-		if (boss1ID == 0) return;
+		if (Boss1ID == 0) return;
 		// 获得读条时长
 		int.TryParse(@event["DurationMilliseconds"], out var dur);
 		// 开始绘制
@@ -198,11 +220,74 @@ public class KtisisHyperboreia
 		dp.Scale = new(30);
 		dp.InnerScale = new(14);
 		dp.Radian = float.Pi * 2;
-		dp.Owner = boss1ID;
+		dp.Owner = Boss1ID;
 		dp.Color = accessory.Data.DefaultDangerColor;
 		dp.Delay = 0;
 		dp.DestoryAt = dur;
 
 		accessory.Method.SendDraw(DrawModeEnum.Default, DrawTypeEnum.Donut, dp);
+		
+		if (@event.ActionId == 44440)
+		{
+			Boss1LeftHandID = sid;
+			if (DebugMode) accessory.Method.SendChat($"/e 记录左手ID: {Boss1LeftHandID}");
+		}
+		else
+		{
+			Boss1RightHandID = sid;
+			if (DebugMode) accessory.Method.SendChat($"/e 记录右手ID: {Boss1RightHandID}");
+		}
+    }
+
+	[ScriptMethod(name: "左右手猛击", eventType: EventTypeEnum.StartCasting, eventCondition: ["ActionId:regex:^(44435|44452)$"])]
+    public void Boss1_zysswmj(Event @event, ScriptAccessory accessory)
+    {
+		// 获取aid
+		var aid = @event.ActionId;
+		// 获得读条时长
+		int.TryParse(@event["DurationMilliseconds"], out var dur);
+		// 匹配手臂
+		var sid = (aid == 44435) ? Boss1RightHandID : Boss1LeftHandID;
+		if (sid == 0) return;
+		// 开始绘制
+		var dp = accessory.Data.GetDefaultDrawProperties();
+		dp.Name = "左/右手猛击";
+		dp.Scale = new(30);
+		dp.Owner = sid;
+		dp.Color = accessory.Data.DefaultDangerColor;
+		dp.Delay = 0;
+		dp.DestoryAt = dur + 4700;
+
+		accessory.Method.SendDraw(DrawModeEnum.Default, DrawTypeEnum.Circle, dp);
+    }
+
+	[ScriptMethod(name: "旋转连击", eventType: EventTypeEnum.StartCasting, eventCondition: ["ActionId:regex:^(44445)$"])]
+    public void Boss1_xzlj(Event @event, ScriptAccessory accessory)
+    {
+		// 获得SourceId
+		if (!ParseObjectId(@event["SourceId"], out var sid)) return;
+		// 获得读条时长
+		int.TryParse(@event["DurationMilliseconds"], out var dur);
+		// 延迟
+		var delay = 5000;
+		dur = dur - delay;
+		// 开始绘制
+		var dp = accessory.Data.GetDefaultDrawProperties();
+		dp.Name = "旋转连击";
+		dp.Scale = new(14);
+		dp.Owner = sid;
+		dp.Color = accessory.Data.DefaultDangerColor;
+		dp.Delay = delay;
+		dp.DestoryAt = dur;
+
+		accessory.Method.SendDraw(DrawModeEnum.Default, DrawTypeEnum.Circle, dp);
+    }
+
+	[ScriptMethod(name: "3T踩塔", eventType: EventTypeEnum.StartCasting, eventCondition: ["ActionId:44470"])]
+    public void Boss1_3tct(Event @event, ScriptAccessory accessory)
+    {
+		// 获得读条时长
+		int.TryParse(@event["DurationMilliseconds"], out var dur);
+		accessory.Method.TextInfo("3T踩塔", dur, true);
     }
 }
