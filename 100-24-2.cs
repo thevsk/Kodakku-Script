@@ -39,6 +39,7 @@ public class KtisisHyperboreia
 	const string Name = "[100] [24] [团本] 桑多利亚：第二巡行";
 	const string ChangeLog =
     """
+		ChangeLog:
         [v0.0.0.1] 老1部分机制
         [v0.0.0.2] 完善老1机制（见过的都画了，打太快没见过后面的）
     """;
