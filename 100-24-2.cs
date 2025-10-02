@@ -27,7 +27,7 @@ namespace ThevskScript;
 [ScriptType(
 	name: Name, 
 	version: Version, 
-	note: Note, 
+	note: ChangeLog, 
 	updateInfo: ChangeLog, 
     guid: "7b163f39-b48b-4b19-88bb-efa45bc8610f", 
 	author: "Thevsk", 
@@ -37,7 +37,6 @@ public class KtisisHyperboreia
 {
 	const string Version = "0.0.0.2";
 	const string Name = "[100] [24] [团本] 桑多利亚：第二巡行";
-	const string Note = "[100] [24] [团本] 桑多利亚：第二巡行";
 	const string ChangeLog =
     """
         [v0.0.0.1] 老1部分机制
